@@ -30,6 +30,16 @@ var (
 	monRes       *monitoredres.MonitoredResource
 )
 
+func init() {
+	if err := zap.RegisterEncoder("stackdriver", func(cfg zapcore.EncoderConfig) (zapcore.Encoder, error) {
+		return &stackdriver.Encoder{
+			Encoder: zapcore.NewJSONEncoder(cfg),
+		}, nil
+	}); err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -42,9 +52,6 @@ func main() {
 			"version_id": os.Getenv("GAE_VERSION"),
 		},
 		Type: "gae_app",
-	}
-	if err := zap.RegisterEncoder(stackdriver.RegisterStackdriverEncoder(ctx, projectID, logName)); err != nil {
-		log.Fatal(err)
 	}
 
 	zl := NewLogger(zap.NewAtomicLevelAt(zapcore.DebugLevel))
